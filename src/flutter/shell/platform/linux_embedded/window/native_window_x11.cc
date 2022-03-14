@@ -18,6 +18,25 @@ namespace {
 static constexpr char kWmDeleteWindow[] = "WM_DELETE_WINDOW";
 static constexpr char kWindowTitle[] = "Flutter for Embedded Linux";
 }  // namespace
+  
+struct MwmHints {
+    unsigned long flags;
+    unsigned long functions;
+    unsigned long decorations;
+    long input_mode;
+    unsigned long status;
+};
+enum {
+    MWM_HINTS_FUNCTIONS = (1L << 0),
+    MWM_HINTS_DECORATIONS =  (1L << 1),
+
+    MWM_FUNC_ALL = (1L << 0),
+    MWM_FUNC_RESIZE = (1L << 1),
+    MWM_FUNC_MOVE = (1L << 2),
+    MWM_FUNC_MINIMIZE = (1L << 3),
+    MWM_FUNC_MAXIMIZE = (1L << 4),
+    MWM_FUNC_CLOSE = (1L << 5)
+};
 
 NativeWindowX11::NativeWindowX11(Display* display,
                                  VisualID visual_id,
@@ -56,8 +75,18 @@ NativeWindowX11::NativeWindowX11(Display* display,
   auto wm_delete_window = XInternAtom(display, kWmDeleteWindow, false);
   XSetWMProtocols(display, window_, &wm_delete_window, 1);
 
-  // Set the window title.
+  //remove the window title
   {
+      auto wn_hints_window = XInternAtom(display,"_MOTIF_WM_HINTS",false);
+      struct MwmHints hints;
+      hints.flags = MWM_HINTS_DECORATIONS;
+      hints.decorations = 0;
+      XChangeProperty(display, window_, wn_hints_window, wn_hints_window, 32,
+              PropModeReplace, (unsigned char *)&hints, 5);
+  }
+  
+  // Set the window title.
+  /*{
     XTextProperty property;
     property.value =
         reinterpret_cast<unsigned char*>(const_cast<char*>(kWindowTitle));
@@ -65,7 +94,7 @@ NativeWindowX11::NativeWindowX11(Display* display,
     property.format = 8;
     property.nitems = std::strlen(kWindowTitle);
     XSetWMName(display, window_, &property);
-  }
+  }*/
 
   XMapWindow(display, window_);
 
